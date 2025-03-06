@@ -1,36 +1,25 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Trash2, Plus } from "lucide-react"; // Importar iconos de lucide-react
-import Swal from "sweetalert2"; // Importar SweetAlert2
+import { Trash2, Plus } from "lucide-react";
+import Swal from "sweetalert2";
+
+const backendUrl = import.meta.env.VITE_API_URL;
 
 const FacturacionApp = () => {
   const [invoices, setInvoices] = useState([]);
-  const [client, setClient] = useState({
-    /*     name: "Juan Pérez",
-    email: "juan@example.com",
-    address: "Calle Ficticia 123",
-    cedula: "1725379919", */
-    estado: "Pendiente",
-  });
+  const [client, setClient] = useState({ estado: "Pendiente" });
   const [products, setProducts] = useState([
     { name: "Producto 1", price: 50.0, quantity: 2 },
     { name: "Producto 2", price: 30.0, quantity: 3 },
   ]);
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    price: 0.0,
-    quantity: 1,
-  });
+  const [newProduct, setNewProduct] = useState({ name: "", price: 0.0, quantity: 1 });
   const [ivaRate] = useState(12.0);
-
-  // Estado para controlar la visibilidad del popover
   const [isPopoverVisible, setPopoverVisible] = useState(false);
 
-  // Obtener todas las facturas
   useEffect(() => {
     const getInvoices = async () => {
       try {
-        const response = await axios.get("http://localhost:7000/invoices/");
+        const response = await axios.get(`${backendUrl}/invoices/`);
         setInvoices(response.data);
       } catch (error) {
         console.error("Error obteniendo facturas", error);
@@ -39,26 +28,14 @@ const FacturacionApp = () => {
     getInvoices();
   }, []);
 
-  const handleClientChange = (e) => {
-    setClient({
-      ...client,
-      [e.target.id]: e.target.value,
-    });
-  };
+  const handleClientChange = (e) => setClient({ ...client, [e.target.id]: e.target.value });
 
-  // Crear factura
   const handleCreateInvoice = async (e) => {
     e.preventDefault();
     const invoice = { client, products, iva_rate: ivaRate };
-    console.log(invoice);
-    try {
-      const response = await axios.post(
-        "http://localhost:7000/create_invoice/",
-        invoice
-      );
-      console.log(response.data.invoice);
 
-      // Mostrar alerta de éxito con SweetAlert
+    try {
+      const response = await axios.post(`${backendUrl}/create_invoice/`, invoice);
       Swal.fire({
         title: "Factura Creada",
         text: `Factura para ${response.data.invoice.client.name} creada exitosamente.`,
@@ -66,11 +43,9 @@ const FacturacionApp = () => {
         confirmButtonText: "Aceptar",
       });
     } catch (error) {
-      console.log(error);
-      // Mostrar alerta de error con SweetAlert
       Swal.fire({
         title: "Error",
-        text: "Hubo un problema al crear la factura. Intenta nuevamente.",
+        text: "Hubo un problema al crear la factura.",
         icon: "error",
         confirmButtonText: "Aceptar",
       });
@@ -78,16 +53,11 @@ const FacturacionApp = () => {
   };
 
   const calculateTotals = () => {
-    const subtotal = products.reduce(
-      (acc, prod) => acc + prod.price * prod.quantity,
-      0
-    );
+    const subtotal = products.reduce((acc, prod) => acc + prod.price * prod.quantity, 0);
     const ivaAmount = (subtotal * ivaRate) / 100;
-    const total = subtotal + ivaAmount;
-    return { subtotal, ivaAmount, total };
+    return { subtotal, ivaAmount, total: subtotal + ivaAmount };
   };
 
-  // Agregar un nuevo producto
   const handleAddProduct = (e) => {
     e.preventDefault();
     if (!newProduct.name || newProduct.price <= 0 || newProduct.quantity <= 0) {
@@ -96,13 +66,11 @@ const FacturacionApp = () => {
     }
     setProducts([...products, newProduct]);
     setNewProduct({ name: "", price: 0.0, quantity: 1 });
-    setPopoverVisible(false); // Cerrar el popover después de agregar el producto
+    setPopoverVisible(false);
   };
 
-  // Eliminar un producto
   const handleRemoveProduct = (index) => {
-    const newProducts = products.filter((_, i) => i !== index);
-    setProducts(newProducts);
+    setProducts(products.filter((_, i) => i !== index));
   };
 
   return (

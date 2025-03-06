@@ -2,27 +2,20 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const backendUrl = import.meta.env.VITE_API_URL;
+
 const InvoiceTable = () => {
   const [invoices, setInvoices] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios
-      .get("http://localhost:7000/invoices/")
-      .then((response) => {
-        setInvoices(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching invoices:", error);
-      });
+    axios.get(`${backendUrl}/invoices/`)
+      .then((response) => setInvoices(response.data))
+      .catch((error) => console.error("Error fetching invoices:", error));
   }, []);
 
-  console.log(invoices);
+  const handlePay = (invoiceId) => navigate(`/pay/${invoiceId}`);
 
-  const handlePay = (invoiceId) => {
-    console.log(invoiceId);
-    navigate(`/pay/${invoiceId}`);
-  };
 
   return (
     <div className="p-4">

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 
+const backendUrl = import.meta.env.VITE_API_URL;
+
 function PaymentPage() {
   const { invoiceId } = useParams();
   const navigate = useNavigate();
@@ -11,12 +13,9 @@ function PaymentPage() {
   const [amountPaid, setAmountPaid] = useState("");
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:7000/invoice/${invoiceId}`)
+    axios.get(`${backendUrl}/invoice/${invoiceId}`)
       .then((response) => setInvoice(response.data))
-      .catch((error) => {
-        Swal.fire("Error", "Error cargando factura", "error");
-      });
+      .catch(() => Swal.fire("Error", "Error cargando factura", "error"));
   }, [invoiceId]);
 
   const handlePayment = async () => {
@@ -29,34 +28,23 @@ function PaymentPage() {
       title: "Procesando pago...",
       text: "Por favor, espera",
       allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
+      didOpen: () => Swal.showLoading(),
     });
 
     try {
-      const response = await axios.post(
-        `http://localhost:7000/pay_invoice/${invoiceId}`,
-        {
-          method: paymentMethod,
-          amount_paid: parseFloat(amountPaid),
-        }
-      );
-
-      Swal.fire({
-        title: "Éxito",
-        text: response.data.message,
-        icon: "success",
-        confirmButtonText: "OK",
-      }).then(() => {
-        navigate("/detallesFacturas");
+      const response = await axios.post(`${backendUrl}/pay_invoice/${invoiceId}`, {
+        method: paymentMethod,
+        amount_paid: parseFloat(amountPaid),
       });
+
+      Swal.fire("Éxito", response.data.message, "success").then(() => navigate("/detallesFacturas"));
     } catch (error) {
       Swal.fire("Error", "Error al procesar el pago", "error");
     }
   };
 
   if (!invoice) return <p>Cargando factura...</p>;
+
 
   return (
     <div className="max-w-md mx-auto mt-10 p-5 border rounded-lg shadow-lg bg-white">
